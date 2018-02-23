@@ -7,7 +7,7 @@ type Pixel struct {
 }
 
 type Picture struct {
-	image         [][]Pixel
+	pixels        [][]Pixel
 	width, height int
 	num_pixels    int
 }

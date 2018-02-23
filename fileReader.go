@@ -11,12 +11,12 @@ func init() {
 	image.RegisterFormat("jpeg", "jpeg", jpeg.Decode, jpeg.DecodeConfig)
 }
 
-func readImageFromFile(fileName string) ([][]Pixel, error) {
-	imageFile, err := os.Open("images/3/" + fileName)
-
+func readImageFromFile(fileName string) (Picture, error) {
+	imageFile, err := os.Open("images/" + fileName)
+	var picture Picture
 	if err != nil {
 		fmt.Println("image not found...")
-		return nil, err
+		return picture, err
 	}
 
 	defer imageFile.Close()
@@ -38,16 +38,20 @@ func readImageFromFile(fileName string) ([][]Pixel, error) {
 		}
 	}
 
-	return pixels, nil
+	picture = Picture{pixels, width, height, width*height}
+	return picture, nil
 
 }
 
 func main() {
-	pixels, _ := readImageFromFile("Test Image.jpg")
-	fmt.Println(pixels[0][0])
-	fmt.Println(pixels[199][32])
-	fmt.Println(pixels[22][32])
-	fmt.Println(euclideanDistance(&pixels[1][2], &pixels[199][32]))
+	picture, _ := readImageFromFile("testimg.jpg")
+
+	//fmt.Println(pixels[199][32])
+	//fmt.Println(pixels[22][32])
+	//fmt.Println(euclideanDistance(&pixels[1][2], &pixels[199][32]))
 	//generateRandomGenotype(pixels)
-	fmt.Println(makeWeightTable(pixels))
+	neighbours := getNeighbourhood(Position{1, 7}, picture.width, picture.height)
+	fmt.Println(neighbours)
+	minKey(Position{1, 7}, neighbours, &picture)
+	generateMinimumSpanningTree(&picture)
 }
