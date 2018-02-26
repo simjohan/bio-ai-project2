@@ -4,16 +4,18 @@ import (
 	"math/rand"
 	"fmt"
 	"math"
+	"image"
 )
 
 type Direction int
 
-type Position struct {
+/* can be replaced with Point{} */
+type Point struct {
 	x, y int
 }
 
 type Gene struct {
-	position  Position
+	point  image.Point
 	direction Direction
 }
 
@@ -70,93 +72,120 @@ func generateRandomDirection() Direction {
 	}
 */
 
-// Returns a Position-array containing the cardinal neighbour positions
-func getNeighbourhood(position Position, height, width int) []Position {
-	var adjacent []Position
+// Returns a Point-array containing the cardinal neighbour points
+func getNeighbourhood(point Point, height, width int) []Point {
+	var adjacent []Point
 
 	// up
-	if position.x != 0 {
-		adjacent = append(adjacent, Position{position.x - 1, position.y})
+	if point.x != 0 {
+		adjacent = append(adjacent, Point{point.x - 1, point.y})
 	}
 
 	// down
-	if position.x != height-1 {
-		adjacent = append(adjacent, Position{position.x + 1, position.y})
+	if point.x != height-1 {
+		adjacent = append(adjacent, Point{point.x + 1, point.y})
 	}
 
 	// left
-	if position.y != 0 {
-		adjacent = append(adjacent, Position{position.x, position.y - 1})
+	if point.y != 0 {
+		adjacent = append(adjacent, Point{point.x, point.y - 1})
 	}
 
 	// right
-	if position.y != width-1 {
-		adjacent = append(adjacent, Position{position.x, position.y + 1})
+	if point.y != width-1 {
+		adjacent = append(adjacent, Point{point.x, point.y + 1})
 	}
 
 	return adjacent
-
-	/*for row := x; row < x; row++ {
-	 		for col := y; col < y; row++ {
-
-			}
-		}*/
 }
 
-func minKey(from Position, neighbours []Position, picture *Picture) Position {
+
+func minKey(from Point, neighbours []Point, picture *Picture) Point {
 	// set initially to infinity
 	min := math.Inf(0)
-	var leastCostNeighbour Position
+	var leastCostNeighbour Point
 
 	for i := range neighbours {
 		origin := &picture.pixels[from.x][from.y]
 		to := &picture.pixels[neighbours[i].x][neighbours[i].y]
 		rgbDistance := euclideanDistance(origin, to)
 		//fmt.Println(rgbDistance)
+		//fmt.Println(rgbDistance)
 		if rgbDistance < min {
 			min = rgbDistance
 			leastCostNeighbour = neighbours[i]
 		}
 	}
+	//fmt.Println(leastCostNeighbour)
 	return leastCostNeighbour
 }
 
 // Implement Prims algorithm to make a minimum spanning tree
 func generateMinimumSpanningTree(picture *Picture) {
-	//randRow := rand.Intn(picture.height)
-	//randCol := rand.Intn(picture.width)
 
-	fmt.Println(picture.width)
-
-	var parent [10][10]int
-	var key    [10][10]float64
-	var mstSet [10][10]bool
-
+	var parent [2][2]Point
+	var cost    [2][2]float64
+	var visited [2][2]bool
+/*
+	var parent [321][481]Point
+	var key    [321][481]float64
+	var mstSet [321][481]bool
+*/
 	// init all keys as infinite
-	for row := range key {
-		for col := range key[row] {
-			key[row][col] = math.Inf(0)
-			mstSet[row][col] = false
+	for row := range cost {
+		for col := range cost[row] {
+			cost[row][col] = math.Inf(0)
+			visited[row][col] = false
 		}
 	}
 
-	key[0][0] = 0
-	parent[0][0] = -1
+	cost[0][0] = 0
+	parent[0][0] = Point{}
+	visited[0][0] = true
 
-	for row := range picture.pixels {
-		for col := range picture.pixels[row] {
-			pos := Position{row, col}
-			neighbours := getNeighbourhood(pos, picture.height, picture.width)
+	/*
+	        mstSet[u] = true;
+
+        // Update key value and parent index of the adjacent vertices of
+        // the picked vertex. Consider only those vertices which are not yet
+        // included in MST
+        for (int v = 0; v < V; v++)
+
+           // graph[u][v] is non zero only for adjacent vertices of m
+           // mstSet[v] is false for vertices not yet included in MST
+           // Update the key only if graph[u][v] is smaller than key[v]
+          if (graph[u][v] && mstSet[v] == false && graph[u][v] <  key[v])
+             parent[v]  = u, key[v] = graph[u][v];
+     }
+
+     // print the constructed MST
+     printMST(parent, V, graph);
+}
+	 */
+	 for row := 0; row < len(picture.pixels); row++ {
+		for col := 0; col < len(picture.pixels[0]); col++ {
+			pos := Point{col, row}
+			neighbours := getNeighbourhood(pos, picture.width, picture.height)
+			fmt.Println(picture.pixels[col][row])
 			u := minKey(pos, neighbours, picture)
-			mstSet[u.x][u.y] = true
+			//visited[u.x][u.y] = true
+			fmt.Println(neighbours)
+			for n := 0; n < len(neighbours)-1; n++ {
+				dist := euclideanDistance(&picture.pixels[col][row], &picture.pixels[neighbours[n].y][neighbours[n].x])
+				//fmt.Println(dist, neighbours[n].x, neighbours[n].y)
+				if visited[neighbours[n].y][neighbours[n].x] == false &&
+					dist < cost[neighbours[n].y][neighbours[n].x] {
+						visited[neighbours[n].y][neighbours[n].x] = true
+						parent[neighbours[n].y][neighbours[n].x] = u
+						cost[neighbours[n].y][neighbours[n].x] = dist
+						//fmt.Println(key[neighbours[n].x][neighbours[n].y])
+				}
+			}
 
 		}
 	}
-	for row := range picture.pixels {
-		for col := range picture.pixels[row] {
+	fmt.Println(parent)
+	fmt.Println(cost)
+	fmt.Println(visited)
 
-			fmt.Println(mstSet[row][col])
-
-		}
-	}
 }
