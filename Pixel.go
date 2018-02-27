@@ -9,7 +9,7 @@ type Pixel struct {
 type Picture struct {
 	pixels        [][]Pixel
 	width, height int
-	numPixels    int
+	numPixels     int
 }
 
 func rgbaToPixel(r, g, b, a uint8) Pixel {
