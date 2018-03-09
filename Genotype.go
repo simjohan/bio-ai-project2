@@ -1,5 +1,5 @@
 package main
-
+/*
 import (
 	"fmt"
 	"math"
@@ -7,7 +7,7 @@ import (
 	"log"
 )
 
-/* can be replaced with Point{} */
+/* can be replaced with Point{}
 type Point struct {
 	x, y int
 }
@@ -109,7 +109,7 @@ func generateMinimumSpanningTree(picture *Picture, width, height int) { // graph
 	/*node := Point{0,0}
 	key[node] = 0
 	parent[node] = node
-*/
+
 
 	for x := 0; x < width-1; x++ {
 		for y := 0; y < height-1; y++ {
@@ -145,13 +145,13 @@ func generateMinimumSpanningTree(picture *Picture, width, height int) { // graph
 	}
 	/*for k, v := range key {
 		fmt.Println("k: ", k, "v", v)
-	}*/
+	}
 	for kid, parent := range parent {
 		fmt.Println(parent, "->", kid)
 	}
 
 
 
-}
+}*/
 
 
