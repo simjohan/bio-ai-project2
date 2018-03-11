@@ -46,7 +46,7 @@ func (p Population) MOEA() {
 }
 
 func (i *Individual) calculateWightedFitness() float64 {
-	return i.Phenotype.EdgeValue() + i.Phenotype.OverallDeviaton()*-1
+	return i.Phenotype.EdgeValue() + i.Phenotype.OverallDeviation()*-1
 }
 
 func initPopulation(picture *Picture, populationSize int) Population {
@@ -64,7 +64,7 @@ func initPopulation(picture *Picture, populationSize int) Population {
 		genotype := Genotype{geno}
 		phenotype := Phenotype{pheno, generateSegmentIdMap(pheno), picture}
 
-		individual := Individual{genotype, phenotype, 0}
+		individual := Individual{genotype, phenotype, 0, phenotype.OverallDeviation(), phenotype.EdgeValue()}
 		individuals = append(individuals, individual)
 
 		log.Println("Individual", i+1, "/", populationSize)

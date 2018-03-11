@@ -1,6 +1,9 @@
 package main
 
-import "sort"
+import (
+	"sort"
+	"math"
+)
 
 func nonDominatedSort(population *Population) map[int][]Individual {
 	/* Map to store all individuals dominated by the key Individual*/
@@ -64,11 +67,25 @@ func crowdingDistance(front []Individual) {
 
 	/* calculate for OverallDeviation */
 	sort.Sort(byOverallDeviation(front))
+	//for _, individual := range fron
+	distances[front[0]], distances[front[len(front)-1]] = math.Inf(0), math.Inf(0)
+	for i := 1; i < len(front); i++ {
+		distances[front[i]] =
+			distances[front[i]] +
+				(front[i + 1].overallDeviation - front[i - 1].overallDeviation) /
+					(front[len(front)-1].overallDeviation - front[0].overallDeviation)
+	}
 
 
 	/* calculate for EdgeValue */
 	sort.Sort(byEdgeValue(front))
-
+	distances[front[0]], distances[front[len(front)-1]] = math.Inf(0), math.Inf(0)
+	for i := 1; i < len(front); i++ {
+		distances[front[i]] =
+			distances[front[i]] +
+				(front[i + 1].edgeValue - front[i - 1].edgeValue) /
+					(front[0].edgeValue - front[len(front)-1].edgeValue)
+	}
 }
 
 
@@ -82,7 +99,7 @@ func dominates(i1, i2 *Individual) bool {
 }
 
 /* sorting implementations for objective functions */
-/* edge is minimized */
+/* overallDeviation is minimized */
 type byOverallDeviation 						[]Individual
 func (f byOverallDeviation) Len() int 			{ return len(f) }
 func (f byOverallDeviation) Swap(i, j int) 		{ f[i], f[j] = f[j], f[i] }
