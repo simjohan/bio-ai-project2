@@ -38,18 +38,20 @@ func updatePixelColors(segments [][]Vertex, picture Picture) {
 		r,g,b,a := color.RGBA()
 
 		for element := range segments[segment] {
-			x := segments[segment][element].(Point).X
-			y := segments[segment][element].(Point).Y
+			x := segments[segment][element].X
+			y := segments[segment][element].Y
 			picture.pixels[x][y] = Pixel{uint8(r),uint8(g),uint8(b),uint8(a)}
-			/*pixel.R = uint8(r)
-			pixel.G = uint8(g)
-			pixel.B = uint8(b)
-			pixel.A = uint8(a)
-			pixel.R = 255
-			pixel.G = 255
-			pixel.B = 255
-			pixel.A = 255*/
+
 		}
+	}
+}
+
+func updateEdgeColors(segment []Vertex, picture Picture) {
+	for element := range segment {
+		x := segment[element].X
+		y := segment[element].Y
+		picture.pixels[x][y] = Pixel{uint8(229),uint8(241),uint8(0),uint8(255)}
+
 	}
 }
 
@@ -57,8 +59,8 @@ func averageSegmentColor(segment []Vertex, picture *Picture) color.Color {
 	var r, g, b int
 
 	for point := range segment {
-		x := segment[point].(Point).X
-		y := segment[point].(Point).Y
+		x := segment[point].X
+		y := segment[point].Y
 		pixel := picture.pixels[x][y]
 
 		r += int(pixel.R)

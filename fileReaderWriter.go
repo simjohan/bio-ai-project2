@@ -54,7 +54,7 @@ func drawPicture(picture Picture) {
 			img.Set(x, y, rgb)
 		}
 	}
-	f, err := os.Create("draw.png")
+	f, err := os.Create("images/output/draw.png")
 	if err != nil {
 		panic(err)
 	}
