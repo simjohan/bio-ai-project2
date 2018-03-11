@@ -34,7 +34,7 @@ func (e Edge) String() string {
 	return fmt.Sprintf("%v <--> %v, Weight: %f\n", e.U, e.V, e.Weight)
 }
 
-func (g Graph) GraphSegmentation(k int) [][]Vertex {
+func (g Graph) GraphSegmentation(k int) ([][]Vertex, []Direction) {
 	sort.Slice(g.Edges, func(i, j int) bool {
 		return g.Edges[i].Weight < g.Edges[j].Weight
 	})
@@ -81,8 +81,9 @@ func (g Graph) GraphSegmentation(k int) [][]Vertex {
 
 
 	/* start on building flat map (genotype)  */
-	directions := make(map[Vertex]Direction)
-	parent     := make(map[Vertex]Vertex)
+	directions 	   := make(map[Vertex]Direction)
+	directionsFlat := make([]Direction, 0)
+	parent         := make(map[Vertex]Vertex)
 
 	/* init all node parents to itself */
 	for _, node := range g.Vertices {
@@ -115,11 +116,14 @@ func (g Graph) GraphSegmentation(k int) [][]Vertex {
 
 	for node, par := range parent {
 		directions[node] = edgeDirection(Edge{node, par, 0})
+		directionsFlat = append(directionsFlat, edgeDirection(Edge{node, par, 0}))
 	}
+
 	//fmt.Println(directions)
 	//genoToPheno(directions)
 	//return segments
-	return genoToPheno(directions)
+	//return genoToPheno(directions)
+	return genoToPheno(directionsFlat), directionsFlat
 }
 
 func edgeDirection(edge Edge) Direction {
@@ -197,15 +201,25 @@ const (
 	None
 )
 
-func genoToPheno(directions map[Vertex]Direction) [][]Vertex {
+func genoToPheno(directions []Direction) [][]Vertex {
+
+	directionsMap := make(map[Vertex]Direction)
+
+	i := 0
+	for x := 0; x < pictureWidth; x++ {
+		for y := 0; y < pictureHeight; x++ {
+			directionsMap[Vertex{x, y}] = directions[i]
+			i++
+		}
+	}
 
 	disjoint := make(map[Vertex]*Element)
-	for v := range directions {
+	for v := range directionsMap {
 		simpleSet := MakeSet(disjoint[v])
 		disjoint[v] = simpleSet
 	}
 
-	for v, dir := range directions {
+	for v, dir := range directionsMap {
 		adjacent := getNeighbourFromDirection(v, dir)
 		set1     := FindSet(disjoint[v])
 		set2     := FindSet(disjoint[adjacent])
@@ -213,7 +227,7 @@ func genoToPheno(directions map[Vertex]Direction) [][]Vertex {
 	}
 
 	toSegment := make(map[*Element][]Vertex)
-	for s := range directions {
+	for s := range directionsMap {
 		toSegment[FindSet(disjoint[s])] = append(toSegment[FindSet(disjoint[s])], s)
 	}
 
@@ -246,6 +260,8 @@ func getNeighbours(from Vertex) (Vertex, error, Vertex, error) {
 
 }
 
+
+// TODO: consider only returning bottom and right neighbours
 func getAllCardinalNeighbours(from Vertex) []Vertex {
 	nodes := make([]Vertex, 0)
 
@@ -255,9 +271,9 @@ func getAllCardinalNeighbours(from Vertex) []Vertex {
 	}
 
 	// left
-	if from.X > 0 {
-		nodes = append(nodes, Vertex{from.X - 1, from.Y})
-	}
+	//if from.X > 0 {
+	//	nodes = append(nodes, Vertex{from.X - 1, from.Y})
+	//}
 
 	// down
 	if from.Y != pictureHeight-1 {
@@ -265,9 +281,9 @@ func getAllCardinalNeighbours(from Vertex) []Vertex {
 	}
 
 	// up
-	if from.Y > 0 {
-		nodes = append(nodes, Vertex{from.X, from.Y - 1})
-	}
+	//if from.Y > 0 {
+	//	nodes = append(nodes, Vertex{from.X, from.Y - 1})
+	//}
 
 	return nodes
 

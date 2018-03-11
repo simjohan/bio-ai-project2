@@ -16,8 +16,13 @@ type Picture struct {
 	numPixels     int
 }
 
-func rgbaToPixel(r, g, b, a uint8) Pixel {
+func colorToPixel(r, g, b, a uint8) Pixel {
 	return Pixel{r, g, b, a}
+}
+
+func rgbaToPixel(color color.Color) Pixel {
+	r, g, b, a := color.RGBA()
+	return Pixel{uint8(r>>8), uint8(g>>8), uint8(b>>8), uint8(a>>8)}
 }
 
 /*func euclideanDistance(p1, p2 *Pixel) float64 {

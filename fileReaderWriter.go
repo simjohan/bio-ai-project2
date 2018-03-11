@@ -35,7 +35,7 @@ func readImageFromFile(fileName string) (Picture, error) {
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
 			r, g, b, a := img.At(x, y).RGBA()
-			pixels[x][y] = rgbaToPixel(uint8(r>>8), uint8(g>>8), uint8(b>>8), uint8(a>>8))
+			pixels[x][y] = colorToPixel(uint8(r>>8), uint8(g>>8), uint8(b>>8), uint8(a>>8))
 		}
 	}
 
@@ -44,7 +44,7 @@ func readImageFromFile(fileName string) (Picture, error) {
 
 }
 
-func drawPicture(picture Picture) {
+func drawPicture(picture *Picture, name string) {
 	var img = image.NewRGBA(image.Rect(0,0, picture.width, picture.height))
 	for x := 0; x < picture.width; x++ {
 		for y := 0; y < picture.height; y++ {
@@ -54,7 +54,7 @@ func drawPicture(picture Picture) {
 			img.Set(x, y, rgb)
 		}
 	}
-	f, err := os.Create("images/output/draw.png")
+	f, err := os.Create("images/output/draw"+name+".png")
 	if err != nil {
 		panic(err)
 	}
@@ -69,7 +69,7 @@ func inBounds(node Vertex, picture *Picture) bool {
 	return false
 }
 
-func drawGroundTruthPicture(picture *Picture, segments [][]Vertex, segmentIdMap map[Vertex]int) {
+func drawGroundTruthPicture(picture *Picture, segments [][]Vertex, segmentIdMap map[Vertex]int, name string) {
 	var img = image.NewRGBA(image.Rect(0,0, picture.width, picture.height))
 	for s := range segments {
 		for _, vertex := range segments[s]{
@@ -89,7 +89,7 @@ func drawGroundTruthPicture(picture *Picture, segments [][]Vertex, segmentIdMap 
 
 		}
 	}
-	f, err := os.Create("images/output/draw.png")
+	f, err := os.Create("images/output/draw_"+name+".png")
 	if err != nil {
 		panic(err)
 	}
