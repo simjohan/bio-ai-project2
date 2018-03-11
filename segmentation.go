@@ -34,7 +34,6 @@ func (e Edge) String() string {
 	return fmt.Sprintf("%v <--> %v, Weight: %f\n", e.U, e.V, e.Weight)
 }
 
-
 func (g Graph) GraphSegmentation(k int) [][]Vertex {
 	sort.Slice(g.Edges, func(i, j int) bool {
 		return g.Edges[i].Weight < g.Edges[j].Weight
@@ -90,19 +89,10 @@ func (g Graph) GraphSegmentation(k int) [][]Vertex {
 		parent[node] = node
 	}
 
-	//neighbours := make(map[Vertex][]Vertex)
-	//for _, edge := range mst {
-	//	neighbours[edge.U] = append(neighbours[edge.U], neighbours[edge.V])
-	//	neighbours[edge.V] = append(neighbours[edge.V], neighbours[edge.U])
-	//
-	//}
 	neighbours := make(map[Vertex][]Vertex)
 	for _, edge := range mst {
-		//from := Point{edge.U.(Point).X, edge.U.(Point).Y}
-		//to := Point{edge.V.(Point).X, edge.V.(Point).Y}
 		neighbours[edge.U]  = append(neighbours[edge.U], edge.V)
 		neighbours[edge.V] = append(neighbours[edge.V], edge.U)
-
 	}
 
 	/* bfs to make a tree with all vertices, with only one edge */
@@ -256,7 +246,7 @@ func getNeighbours(from Vertex) (Vertex, error, Vertex, error) {
 
 }
 
-func getAllCardinalNeighbours(from Vertex) {
+func getAllCardinalNeighbours(from Vertex) []Vertex {
 	nodes := make([]Vertex, 0)
 
 	// right
@@ -278,6 +268,8 @@ func getAllCardinalNeighbours(from Vertex) {
 	if from.Y > 0 {
 		nodes = append(nodes, Vertex{from.X, from.Y - 1})
 	}
+
+	return nodes
 
 }
 

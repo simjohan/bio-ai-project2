@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"log"
 	"time"
-	"math/rand"
+	"./tester"
+
 )
 
 // global vars
@@ -12,7 +13,7 @@ var pictureWidth, pictureHeight int
 
 func main() {
 	//picture, _ := readImageFromFile("test3x3.jpg")
-	picture, _ := readImageFromFile("3/Test image.jpg")
+	picture, _ := readImageFromFile("147091/Test image.jpg")
 	pictureWidth = picture.width
 	pictureHeight = picture.height
 
@@ -23,11 +24,16 @@ func main() {
 	// a good k value seems to be somewhere in the 1000-3000 range
 	start := time.Now()
 	log.Println("Started")
-	for i := 0; i < 5; i++ {
-		segments := graph.GraphSegmentation(rand.Intn(800-200) + 200)
-		fmt.Println(len(segments))
-	}
+	//for i := 0; i < 5; i++ {
+	//	segments := graph.GraphSegmentation(rand.Intn(800-200) + 200)
+	//	fmt.Println(len(segments))
+	//}
 
+	//segments := graph.GraphSegmentation(rand.Intn(800-200) + 200)
+	segments := graph.GraphSegmentation(2000)
+	segmentIdMap := generateSegmentIdMap(segments)
+	drawGroundTruthPicture(&picture, segments, segmentIdMap)
+	tester.CalculatePRI("/Users/simenjohansen/Documents/skole/Bio-AI/bio-ai-project2/tester/run.py", "/Users/simenjohansen/Documents/skole/Bio-AI/bio-ai-project2/images/147091/", "/Users/simenjohansen/Documents/skole/Bio-AI/bio-ai-project2/images/output/")
 	log.Println("Elapsed", time.Since(start))
 
 	//updatePixelColors(segments, picture)

@@ -61,3 +61,38 @@ func drawPicture(picture Picture) {
 	defer f.Close()
 	png.Encode(f, img)
 }
+
+func inBounds(node Vertex, picture *Picture) bool {
+	if node.X >= 0 && node.X < pictureWidth && node.Y >=0 && node.Y < pictureHeight {
+		return true
+	}
+	return false
+}
+
+func drawGroundTruthPicture(picture *Picture, segments [][]Vertex, segmentIdMap map[Vertex]int) {
+	var img = image.NewRGBA(image.Rect(0,0, picture.width, picture.height))
+	for s := range segments {
+		for _, vertex := range segments[s]{
+			white := color.RGBA{R: 255, G: 255, B: 255, A: 255}
+			img.Set(vertex.X, vertex.Y, white)
+
+			node := Vertex{vertex.X, vertex.Y}
+			neighbours := getAllCardinalNeighbours(node)
+			for _, neighbour := range neighbours {
+				if inBounds(neighbour, picture) {
+					if segmentIdMap[vertex] != segmentIdMap[neighbour] {
+						black := color.RGBA{R: 0, G: 0, B: 0, A: 255}
+						img.Set(vertex.X, vertex.Y, black)
+					}
+				}
+			}
+
+		}
+	}
+	f, err := os.Create("images/output/draw.png")
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+	png.Encode(f, img)
+}
