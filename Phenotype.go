@@ -6,7 +6,9 @@ type Phenotype struct {
 	picture 	 	 *Picture
 }
 
-
+func initPhenotype(segments [][]Vertex, pic *Picture) Phenotype {
+	return Phenotype{segments, generateSegmentIdMap(segments), pic}
+}
 
 func generateSegmentIdMap(segments [][]Vertex) map[Vertex]int {
 	segmentIdMap := make(map[Vertex]int)
@@ -40,7 +42,7 @@ func (p Phenotype) EdgeValue() float64 {
 			p1 := p.picture.pixels[node.X][node.Y]
 			neighbours := getAllCardinalNeighbours(node)
 			for _, neighbour := range neighbours {
-				if inBounds(neighbour, p.picture) {
+				if inBounds(neighbour) {
 					if p.segmentIdMap[vertex] != p.segmentIdMap[neighbour] {
 						p2 := p.picture.pixels[neighbour.X][neighbour.Y]
 						edgeValue += euclideanDistance(&p1, &p2)

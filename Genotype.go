@@ -19,6 +19,7 @@ func (g *Genotype) mutate() {
 
 }
 
+
 func generateRandomDirection() Direction {
 	switch rand.Intn(5) {
 	case 0:

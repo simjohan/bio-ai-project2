@@ -62,7 +62,7 @@ func drawPicture(picture *Picture, name string) {
 	png.Encode(f, img)
 }
 
-func inBounds(node Vertex, picture *Picture) bool {
+func inBounds(node Vertex) bool {
 	if node.X >= 0 && node.X < pictureWidth && node.Y >=0 && node.Y < pictureHeight {
 		return true
 	}
@@ -79,7 +79,7 @@ func drawGroundTruthPicture(picture *Picture, segments [][]Vertex, segmentIdMap 
 			node := Vertex{vertex.X, vertex.Y}
 			neighbours := getAllCardinalNeighbours(node)
 			for _, neighbour := range neighbours {
-				if inBounds(neighbour, picture) {
+				if inBounds(neighbour) {
 					if segmentIdMap[vertex] != segmentIdMap[neighbour] {
 						black := color.RGBA{R: 0, G: 0, B: 0, A: 255}
 						img.Set(vertex.X, vertex.Y, black)

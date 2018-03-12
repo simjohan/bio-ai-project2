@@ -123,6 +123,7 @@ func (g Graph) GraphSegmentation(k int) ([][]Vertex, []Direction) {
 	//genoToPheno(directions)
 	//return segments
 	//return genoToPheno(directions)
+	fmt.Println(directionsFlat)
 	return genoToPheno(directionsFlat), directionsFlat
 }
 
@@ -204,10 +205,10 @@ const (
 func genoToPheno(directions []Direction) [][]Vertex {
 
 	directionsMap := make(map[Vertex]Direction)
-
 	i := 0
 	for x := 0; x < pictureWidth; x++ {
-		for y := 0; y < pictureHeight; x++ {
+		for y := 0; y < pictureHeight; y++ {
+			//fmt.Println(i)
 			directionsMap[Vertex{x, y}] = directions[i]
 			i++
 		}
@@ -221,9 +222,11 @@ func genoToPheno(directions []Direction) [][]Vertex {
 
 	for v, dir := range directionsMap {
 		adjacent := getNeighbourFromDirection(v, dir)
-		set1     := FindSet(disjoint[v])
-		set2     := FindSet(disjoint[adjacent])
-		Union(set1, set2)
+		if inBounds(adjacent) {
+			set1 := FindSet(disjoint[v])
+			set2 := FindSet(disjoint[adjacent])
+			Union(set1, set2)
+		}
 	}
 
 	toSegment := make(map[*Element][]Vertex)
@@ -235,6 +238,7 @@ func genoToPheno(directions []Direction) [][]Vertex {
 	for _, v := range toSegment {
 		segments = append(segments, v)
 	}
+	//segmentIdMap := generateSegmentIdMap(segments)
 
 	return segments
 
