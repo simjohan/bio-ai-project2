@@ -4,17 +4,29 @@ import (
 	"log"
 	"time"
 	//"./tester"
-
 	"math/rand"
-	"fmt"
+
+	"strconv"
 )
 
 // global vars
-var pictureWidth, pictureHeight int
+var pictureWidth, pictureHeight, elites, edgeWeight, deviationWeight, generations int
+var pic *Picture
+var mutationRate, crossoverRate float64
 
 func main() {
-	picture, _ := readImageFromFile("test5x3.jpg")
-	//picture, _ := readImageFromFile("147091/Test image.jpg")
+
+	/* params */
+	mutationRate = 0.5
+	crossoverRate = 0.9
+	elites = 1
+	edgeWeight = 1
+	deviationWeight = -1
+	generations = 10
+
+	//picture, _ := readImageFromFile("test5x3.jpg")
+	picture, _ := readImageFromFile("353013/Test image.jpg")
+	pic = &picture
 	pictureWidth = picture.width
 	pictureHeight = picture.height
 	rand.Seed(time.Now().UTC().UnixNano())
@@ -22,35 +34,15 @@ func main() {
 	start := time.Now()
 	log.Println("Started")
 
-	imageGraph := makeGraph(&picture)
-	pheno, geno := imageGraph.GraphSegmentation(2)
-	t := initNewIndividual(pheno, geno )
-	fmt.Println(t.DirectionMatrix)
 
+	pop := Population{}
+	pop.InitPopulation(5)
+	WriteImage("images/output/before"+strconv.Itoa(len(pop.Individuals[0].SegmentMap))+".png", SegmentMatrixToImage(pop.Individuals[0].SegmentMatrix, false))
 
-	//tester.CalculatePRI("/Users/simenjohansen/Documents/skole/Bio-AI/bio-ai-project2/tester/run.py", "/Users/simenjohansen/Documents/skole/Bio-AI/bio-ai-project2/images/147091/", "/Users/simenjohansen/Documents/skole/Bio-AI/bio-ai-project2/images/output/")
+	pop.WeightedSum()
+	//pop.nsga2()
+
+	//tester.CalculatePRI("/Users/simenjohansen/Documents/skole/Bio-AI/bio-ai-project2/tester/run.py", "/Users/simenjohansen/Documents/skole/Bio-AI/bio-ai-project2/images/353013/", "/Users/simenjohansen/Documents/skole/Bio-AI/bio-ai-project2/images/output/paretofront/")
 	log.Println("Elapsed", time.Since(start))
 
 }
-//
-//func testGenoToPheno() {
-//	dirs := make(map[Vertex]Direction)
-//	dirs[Vertex{0, 0}] = Right
-//	dirs[Vertex{1, 0}] = Down
-//	dirs[Vertex{2, 0}] = Left
-//	dirs[Vertex{3, 0}] = None
-//	dirs[Vertex{0, 1}] = Up
-//	dirs[Vertex{1, 1}] = Left
-//	dirs[Vertex{2, 1}] = Up
-//	dirs[Vertex{3, 1}] = Up
-//	dirs[Vertex{0, 2}] = Right
-//	dirs[Vertex{1, 2}] = Right
-//	dirs[Vertex{2, 2}] = Down
-//	dirs[Vertex{3, 2}] = Up
-//	dirs[Vertex{0, 3}] = Up
-//	dirs[Vertex{1, 3}] = Left
-//	dirs[Vertex{2, 3}] = Right
-//	dirs[Vertex{3, 3}] = None
-//
-//	fmt.Println(genoToPheno(dirs))
-//}

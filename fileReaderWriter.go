@@ -7,6 +7,7 @@ import (
 	"os"
 	"image/color"
 	"image/png"
+	"log"
 )
 
 func init() {
@@ -69,7 +70,73 @@ func inBounds(node Vertex) bool {
 	return false
 }
 
-func drawGroundTruthPicture(picture *Picture, segments [][]Vertex, segmentIdMap map[Vertex]int, name string) {
+// Outputs a JPEG image of the image to the path
+func WriteImage(path string, image image.Image) {
+	log.Println("Writing", "\""+path+"\"")
+
+	outfile, err := os.Create(path)
+	if err != nil {
+		panic(err)
+	}
+	defer outfile.Close()
+	pngenc := png.Encoder{CompressionLevel: -1}
+	//jpeg.Encode(outfile, image, &jpeg.Options{Quality:100})
+	pngenc.Encode(outfile, image)
+}
+
+func SegmentMatrixToImage(matrix [][]int, bnw bool) image.Image {
+	pixels := make([][]Pixel, pictureWidth)
+	for i := range pixels {
+		pixels[i] = make([]Pixel, pictureHeight)
+	}
+	for x := range matrix {
+		for y := range matrix[x] {
+			n := Vertex{x, y}
+			right, errRight, down, downErr := getNeighbours(n)
+			border := false
+			if errRight == nil {
+				if matrix[x][y] != matrix[right.X][right.Y] {
+					border = true
+				}
+			}
+			if downErr == nil {
+				if matrix[x][y] != matrix[down.X][down.Y] {
+					border = true
+				}
+			}
+			if border {
+				if bnw {
+					pixels[n.X][n.Y] = Pixel{0, 0, 0, 255}
+				} else {
+					pixels[n.X][n.Y] = Pixel{0, 255, 0, 255}
+				}
+			} else {
+				if bnw {
+					pixels[n.X][n.Y] = Pixel{255, 255, 255, 255}
+				} else {
+					pixels[n.X][n.Y] = pic.pixels[n.X][n.Y]
+				}
+			}
+
+		}
+	}
+	return PixelArrayToRgbaImage(pixels)
+}
+
+func PixelArrayToRgbaImage(pixels [][]Pixel) image.Image {
+	width, height := len(pixels), len(pixels[0])
+	rgbaImage := image.NewRGBA(image.Rect(0, 0, width, height))
+	for x := 0; x < width; x++ {
+		for y := 0; y < height; y++ {
+			p := pixels[x][y]
+			rgbaImage.Set(x, y, color.RGBA{p.R, p.G, p.B, p.A})
+		}
+	}
+	return rgbaImage
+}
+
+
+func drawGroundTruthPicture(picture *Picture, segments [][]Vertex, segMatrix [][]int, name string) {
 	var img = image.NewRGBA(image.Rect(0,0, picture.width, picture.height))
 	for s := range segments {
 		for _, vertex := range segments[s]{
@@ -77,15 +144,16 @@ func drawGroundTruthPicture(picture *Picture, segments [][]Vertex, segmentIdMap 
 			img.Set(vertex.X, vertex.Y, white)
 
 			node := Vertex{vertex.X, vertex.Y}
-			neighbours := getAllCardinalNeighbours(node)
+			neighbours := getTwoCardinalNeighbours(node)
 			for _, neighbour := range neighbours {
 				if inBounds(neighbour) {
-					if segmentIdMap[vertex] != segmentIdMap[neighbour] {
+					if segMatrix[node.X][node.Y] != segMatrix[neighbour.X][neighbour.Y] {
 						black := color.RGBA{R: 0, G: 0, B: 0, A: 255}
 						img.Set(vertex.X, vertex.Y, black)
 					}
 				}
 			}
+
 
 		}
 	}

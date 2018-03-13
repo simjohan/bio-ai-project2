@@ -34,7 +34,7 @@ func (e Edge) String() string {
 	return fmt.Sprintf("%v <--> %v, Weight: %f\n", e.U, e.V, e.Weight)
 }
 
-func (g Graph) GraphSegmentation(k int) ([][]Vertex, []Direction) {
+func (g Graph) GraphSegmentation(k int) ([][]Direction, [][]int, map[int][]Vertex) {
 	sort.Slice(g.Edges, func(i, j int) bool {
 		return g.Edges[i].Weight < g.Edges[j].Weight
 	})
@@ -119,12 +119,34 @@ func (g Graph) GraphSegmentation(k int) ([][]Vertex, []Direction) {
 		directionsFlat = append(directionsFlat, edgeDirection(Edge{node, par, 0}))
 	}
 
-	//fmt.Println(directions)
-	//genoToPheno(directions)
-	//return segments
-	//return genoToPheno(directions)
-	fmt.Println(directionsFlat)
-	return genoToPheno(directionsFlat), directionsFlat
+
+	segmentMatrix := make([][]int, pictureWidth)
+	for x := range segmentMatrix {
+		segmentMatrix[x] = make([]int, pictureHeight)
+	}
+
+	directionMatrix := make([][]Direction, pictureWidth)
+
+	i := 0
+	for x := 0; x < pictureWidth; x++ {
+		directionMatrix[x] = make([]Direction, pictureHeight)
+		for y := 0; y < pictureHeight; y++ {
+			//fmt.Println(i)
+			directionMatrix[x][y] = directionsFlat[i]
+			i++
+		}
+	}
+
+	segmendIdMap := make(map[int][]Vertex)
+	for x, segment := range segments {
+		segmendIdMap[x] = segment
+		for _, elem := range segment {
+			segmentMatrix[elem.X][elem.Y] = x
+		}
+	}
+
+
+	return directionMatrix, segmentMatrix, segmendIdMap
 }
 
 func edgeDirection(edge Edge) Direction {
@@ -143,54 +165,6 @@ func edgeDirection(edge Edge) Direction {
 	return None
 }
 
-//func findSegmentBorder(segment []Vertex) []Vertex {
-//
-//	borders := make([]*map[int]int, 4)
-//	colMin := make(map[int]int)
-//	colMax := make(map[int]int)
-//	rowMin := make(map[int]int)
-//	rowMax := make(map[int]int)
-//
-//	borders[0] = &colMin
-//	borders[1] = &colMax
-//	borders[2] = &rowMin
-//	borders[3] = &rowMax
-//
-//	for v := range segment {
-//
-//		col := segment[v].(Point).X
-//		row := segment[v].(Point).Y
-//
-//		if colMin == nil || colMin[col] > row {
-//			colMin[col] = row
-//		}
-//		if colMax == nil || colMax[col] < row {
-//			colMax[col] = row
-//		}
-//		if rowMin == nil || rowMin[row] > col {
-//			rowMin[row] = col
-//		}
-//		if rowMax == nil || rowMax[row] < col {
-//			rowMax[row] = col
-//		}
-//
-//	}
-//
-//	borderNodes := make([]Vertex, 0)
-//
-//	for e := range borders {
-//		for k, v := range *borders[e] {
-//			if e == 0 || e == 1 {
-//				borderNodes = append(borderNodes, Point{k, v})
-//			} else {
-//				borderNodes = append(borderNodes, Point{v, k})
-//			}
-//		}
-//	}
-//
-//	return borderNodes
-//
-//}
 
 type Direction int
 
@@ -275,6 +249,33 @@ func getAllCardinalNeighbours(from Vertex) []Vertex {
 	}
 
 	// left
+	if from.X > 0 {
+		nodes = append(nodes, Vertex{from.X - 1, from.Y})
+	}
+
+	// down
+	if from.Y != pictureHeight-1 {
+		nodes = append(nodes, Vertex{from.X, from.Y + 1})
+	}
+
+	// up
+	if from.Y > 0 {
+		nodes = append(nodes, Vertex{from.X, from.Y - 1})
+	}
+
+	return nodes
+
+}
+
+func getTwoCardinalNeighbours(from Vertex) []Vertex {
+	nodes := make([]Vertex, 0)
+
+	// right
+	if from.X != pictureWidth-1 {
+		nodes = append(nodes, Vertex{from.X + 1, from.Y})
+	}
+
+	// left
 	//if from.X > 0 {
 	//	nodes = append(nodes, Vertex{from.X - 1, from.Y})
 	//}
@@ -330,4 +331,114 @@ func getNeighbourFromDirection(node Vertex, direction Direction) Vertex {
 	default:
 		return node
 	}
+}
+
+
+
+func SegmentMatrixAndSegmentMapToDirectionMatrix(segmentMatrix [][]int, segmentMap map[int][]Vertex) [][]Direction {
+	matrix := make([][]Direction, pictureWidth)
+	for i := range matrix {
+		matrix[i] = make([]Direction, pictureHeight)
+	}
+	for x := 0; x < pictureWidth; x++ {
+		for y := 0; y < pictureHeight; y++ {
+			matrix[x][y] = None
+		}
+	}
+	for id := range segmentMap {
+		visited := make(map[Vertex]bool)
+		opened := make(map[Vertex]bool)
+		queue := []Vertex{segmentMap[id][0]}
+		for len(queue) > 0 {
+			n := queue[0]
+			visited[n] = true
+			queue = queue[1:]
+			neighbours := getAllCardinalNeighbours(n)
+			for i := range neighbours {
+				if _, visited := visited[neighbours[i]]; visited {
+					continue
+				}
+				if _, o := opened[neighbours[i]]; !o {
+					if segmentMatrix[neighbours[i].X][neighbours[i].Y] == segmentMatrix[n.X][n.Y] {
+						queue = append(queue, neighbours[i])
+						matrix[neighbours[i].X][neighbours[i].Y] = edgeDirection(Edge{neighbours[i], n, 0})
+						opened[neighbours[i]] = true
+					}
+				}
+
+			}
+		}
+	}
+	return matrix
+}
+
+
+func DirectionMatrixToSegmentMatrixAndSegmentMap(directionMatrix [][]Direction) ([][]int, map[int][]Vertex) {
+	// Initialize segment matrix
+	segmentMatrix := make([][]int, pictureWidth)
+	for x := range segmentMatrix {
+		segmentMatrix[x] = make([]int, pictureHeight)
+	}
+	// Initialize disjoint sets
+	djSets := make(map[Vertex]*Element)
+	for x := range directionMatrix {
+		for y := range directionMatrix[x] {
+			set := MakeSet(Vertex{x, y})
+			djSets[Vertex{x, y}] = set
+		}
+	}
+	// Union nodes in same segment
+	for x := range directionMatrix {
+		for y := range directionMatrix[x] {
+			node := Vertex{x, y}
+			neighbour := nodeAndDirectionToNode(node, directionMatrix[x][y])
+			s1, s2 := FindSet(djSets[node]), FindSet(djSets[neighbour])
+			Union(s1, s2)
+		}
+	}
+	// Create segments from sets
+	setToSegment := make(map[*Element][]Vertex)
+	for x := range directionMatrix {
+		for y := range directionMatrix[x] {
+			node := Vertex{x, y}
+			set := FindSet(djSets[node])
+			setToSegment[set] = append(setToSegment[set], node)
+		}
+	}
+	segmentID := 0
+	segmentMap := make(map[int][]Vertex)
+	for set := range setToSegment {
+		for i := range setToSegment[set] {
+			node := setToSegment[set][i]
+			segmentMatrix[node.X][node.Y] = segmentID
+		}
+		segmentMap[segmentID] = setToSegment[set]
+		segmentID++
+	}
+	return segmentMatrix, segmentMap
+}
+
+func nodeAndDirectionToNode(node Vertex, direction Direction) Vertex {
+	var n Vertex
+	switch direction {
+	case Up:
+		n = Vertex{node.X, node.Y - 1}
+	case Down:
+		n = Vertex{node.X, node.Y + 1}
+	case Right:
+		n = Vertex{node.X + 1, node.Y}
+	case Left:
+		n = Vertex{node.X - 1, node.Y}
+	default:
+		return Vertex{node.X, node.Y}
+	}
+	if n.isInRange() {
+		return n
+	} else {
+		return node
+	}
+}
+
+func (node *Vertex) isInRange() bool {
+	return node.X >= 0 && node.X < pictureWidth && node.Y >= 0 && node.Y < pictureHeight
 }

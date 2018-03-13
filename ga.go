@@ -2,107 +2,142 @@ package main
 
 import (
 	"math/rand"
-
+	"log"
+	"strconv"
 	"sort"
-	"fmt"
+	"math"
 )
 
-type Individual struct {
-	Genotype  		 Genotype
-	Phenotype 		 Phenotype
-	Fitness   		 float64
-	overallDeviation float64
-	edgeValue 		 float64
-	crowdingDistance float64
-	Rank			 int
-}
 
 type Population struct {
-	Individuals []Individual
+	Individuals []MatrixIndividual
+	Size int
+	GenerationNumber int
+	Fronts [][]*MatrixIndividual
 }
 
-//func MOEA(picture *Picture) {
-//
-//	generations := 10
-//	populationSize := 10
-//
-//	initialPopulation := initPopulation(picture, populationSize)
-//	fronts := nonDominatedSort(&initialPopulation)
-//
-//	for g := 0; g < generations; g++ {
-//
-//		nextPopulation := Population{[]Individual{} }
-//		for len(nextPopulation.Individuals) <= populationSize {
-//
-//		}
-//	}
-//
-//
-//}
+func (population *Population) nsga2() {
 
-
-
-func (p *Population) uniformCrossover(parent1, parent2 *Individual, picture *Picture) (Individual, Individual) {
-
-	var offspring1, offspring2 Individual
-
-	numGenes := len(parent1.Genotype.genes)
-	crossoverPoints := rand.Perm(numGenes)[0:int(numGenes/2)]
-	sort.Ints(crossoverPoints)
-
-	genes1, genes2 := make([]Direction, 0), make([]Direction, 0)
-
-	prev := 0
-	parents := []Individual{*parent1, *parent2}
-	for i, n := range crossoverPoints {
-		if i == len(crossoverPoints) - 1 {
-			n = numGenes
+	for g := 0; g < generations; g++ {
+		for i := 0; i < population.Size/2; i++ {
+			tournamentIndexs := rand.Perm(population.Size)
+			parent1, parent2 := tournamentIndexs[0:2], tournamentIndexs[0:2][2:4]
+			parent1Index := int(math.Min(float64(parent1[0]), float64(parent1[1])))
+			parent2Index := int(math.Min(float64(parent2[0]), float64(parent2[1])))
+			child1, child2 := Crossover(population.Individuals[parent1Index], population.Individuals[parent2Index])
+			population.Individuals = append(population.Individuals, child1, child2)
 		}
-		genes1 = append(genes1, parents[0].Genotype.genes[prev:n]...)
-		genes2 = append(genes2, parents[1].Genotype.genes[prev:n]...)
-		parents[0], parents[1] = parents[1], parents[0]
-		prev = n
+
+		population.NonDominatedSort()
+		population.CrowdingDistance()
+		sort.Sort(ByNSGA(population.Individuals))
+		population.Individuals = population.Individuals[:population.Size]
+		population.NonDominatedSort()
+		population.CrowdingDistance()
+		sort.Sort(ByNSGA(population.Individuals))
+
+
+		log.Println("Generation:", g, "Number of fronts:", len(population.Fronts), "Size of front 1:", len(population.Fronts[0]))
 	}
 
-	fmt.Println(genes1)
-	fmt.Println(genes2)
-
-	pheno1 := initPhenotype(genoToPheno(genes1), picture)
-	pheno2 := initPhenotype(genoToPheno(genes2), picture)
-	offspring1 = Individual{Genotype{genes1}, pheno1, 0, pheno1.OverallDeviation(), pheno1.EdgeValue(), 0.0, 0}
-	offspring2 = Individual{Genotype{genes2}, pheno2, 0, pheno2.OverallDeviation(), pheno2.EdgeValue(), 0.0, 0}
-
-	return offspring1, offspring2
+	for i := range population.Fronts[0] {
+		WriteImage("images/output/paretofront/"+strconv.Itoa(len(population.Fronts[0][i].SegmentMap))+"_"+strconv.Itoa(i)+".png",
+			SegmentMatrixToImage(population.Fronts[0][i].SegmentMatrix, true))
+	}
+	WriteImage("images/output/green/"+strconv.Itoa(len(population.Individuals[0].SegmentMap))+".png",
+		SegmentMatrixToImage(population.Individuals[0].SegmentMatrix, false))
 
 }
 
-// this is shit
-func (i *Individual) calculateWightedFitness() float64 {
-	return i.Phenotype.EdgeValue() + i.Phenotype.OverallDeviation()*-1
+func (population *Population) WeightedSum() {
+	WriteImage("images/output/beforeinsed.png", SegmentMatrixToImage(population.Individuals[0].SegmentMatrix, false))
+	for g := 0; g <= generations; g++ {
+
+		sort.Sort(byFitness(population.Individuals))
+
+
+		newPop := make([]MatrixIndividual, 0)
+
+		// elitism
+		newPop = append(newPop, population.Individuals[0:elites]...)
+
+		for fh := 0; fh < population.Size / 2; fh++ {
+			tournamentIndexs := rand.Perm(population.Size)[0:4]
+			tournament := make([]MatrixIndividual, 0)
+
+			for _, i := range tournamentIndexs {
+				tournament = append(tournament, population.Individuals[i])
+			}
+			sort.Sort(byFitness(tournament))
+			child1, child2 := Crossover(tournament[0], tournament[1])
+			newPop = append(newPop, child1, child2)
+		}
+
+		population.Individuals = newPop[:population.Size]
+		sort.Sort(byFitness(population.Individuals))
+
+		log.Println("Generation", g, "edge:", population.Individuals[1].edgeValue, "Best:", population.Individuals[0].Fitness, "Worst:", population.Individuals[len(population.Individuals)-1].Fitness)
+		break
+	}
+	WriteImage("images/output/weighted_sum/"+strconv.Itoa(len(population.Individuals[0].SegmentMap))+".png",
+		SegmentMatrixToImage(population.Individuals[0].SegmentMatrix, false))
 }
 
-//func initPopulation(picture *Picture, populationSize int) Population {
-//
-//	log.Println("Initializing population (size", strconv.Itoa(populationSize) + ")")
-//
-//	imageGraph := makeGraph(picture)
-//
-//	individuals := make([]Individual, 0)
-//	for i := 0; i < populationSize; i++ {
-//		// random value from 200-6000
-//		randomKValue := rand.Intn((6000 - 200) + 200)
-//
-//		pheno, geno := imageGraph.GraphSegmentation(randomKValue)
-//		genotype := Genotype{geno}
-//		phenotype := initPhenotype(pheno, picture)
-//
-//		individual := Individual{genotype, phenotype, 0, phenotype.OverallDeviation(), phenotype.EdgeValue(), 0.0, 0}
-//		individuals = append(individuals, individual)
-//
-//		log.Println("Individual", i+1, "/", populationSize)
-//	}
-//
-//	return Population{individuals}
-//
-//}
+
+func (population *Population) InitPopulation(populationSize int)  {
+
+	log.Println("Initializing population (size", strconv.Itoa(populationSize) + ")")
+
+	imageGraph := makeGraph(pic)
+	population.Size = populationSize
+
+	for i := 0; i < populationSize; i++ {
+
+		individual := MatrixIndividual{}
+		individual.Init(imageGraph)
+		individual.edgeValue = individual.EdgeValue()
+		individual.overallDeviation = individual.OverallDeviation()
+
+		population.Individuals = append(population.Individuals, individual)
+
+		log.Println("Individual", i+1, "/", populationSize)
+	}
+
+}
+
+
+func Crossover(parent1, parent2 MatrixIndividual) (MatrixIndividual, MatrixIndividual) {
+	child1, child2 := MatrixIndividual{}, MatrixIndividual{}
+	child1.DirectionMatrix = parent1.DirectionMatrix
+	child2.DirectionMatrix = parent2.DirectionMatrix
+	// Choose random segment from parent1 to add to child2
+	if rand.Float64() < crossoverRate {
+		for i := 0; i < 1; i++ {
+			id := randomSegmentId(parent1.SegmentMap)
+			for _, n := range parent1.SegmentMap[id] {
+				child2.DirectionMatrix[n.X][n.Y] = parent1.DirectionMatrix[n.X][n.Y]
+			}
+			// Choose random segment from parent2 to add to child1
+			id = randomSegmentId(parent2.SegmentMap)
+			for _, n := range parent2.SegmentMap[id] {
+				child1.DirectionMatrix[n.X][n.Y] = parent2.DirectionMatrix[n.X][n.Y]
+			}
+
+		}
+	}
+	child1.SegmentMatrix, child1.SegmentMap = DirectionMatrixToSegmentMatrixAndSegmentMap(child1.DirectionMatrix)
+	child2.SegmentMatrix, child2.SegmentMap = DirectionMatrixToSegmentMatrixAndSegmentMap(child2.DirectionMatrix)
+	if rand.Float64() < mutationRate {
+		for i := 0; i < rand.Intn(100-2)+2; i++ {
+			child1.mutate()
+			child2.mutate()
+		}
+		child1.DirectionMatrix = SegmentMatrixAndSegmentMapToDirectionMatrix(child1.SegmentMatrix, child1.SegmentMap)
+		child2.DirectionMatrix = SegmentMatrixAndSegmentMapToDirectionMatrix(child2.SegmentMatrix, child2.SegmentMap)
+	}
+	child1.CalculateFitness()
+	child2.CalculateFitness()
+	return child1, child2
+}
+
 
