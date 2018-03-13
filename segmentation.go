@@ -34,7 +34,7 @@ func (e Edge) String() string {
 	return fmt.Sprintf("%v <--> %v, Weight: %f\n", e.U, e.V, e.Weight)
 }
 
-func (g Graph) GraphSegmentation(k int) ([][]Direction, [][]int, map[int][]Vertex) {
+func (g Graph) GraphSegmentation(k int) ([]Direction, [][]Direction) {
 	sort.Slice(g.Edges, func(i, j int) bool {
 		return g.Edges[i].Weight < g.Edges[j].Weight
 	})
@@ -82,7 +82,6 @@ func (g Graph) GraphSegmentation(k int) ([][]Direction, [][]int, map[int][]Verte
 
 	/* start on building flat map (genotype)  */
 	directions 	   := make(map[Vertex]Direction)
-	directionsFlat := make([]Direction, 0)
 	parent         := make(map[Vertex]Vertex)
 
 	/* init all node parents to itself */
@@ -116,37 +115,21 @@ func (g Graph) GraphSegmentation(k int) ([][]Direction, [][]int, map[int][]Verte
 
 	for node, par := range parent {
 		directions[node] = edgeDirection(Edge{node, par, 0})
-		directionsFlat = append(directionsFlat, edgeDirection(Edge{node, par, 0}))
 	}
-
-
-	segmentMatrix := make([][]int, pictureWidth)
-	for x := range segmentMatrix {
-		segmentMatrix[x] = make([]int, pictureHeight)
-	}
-
-	directionMatrix := make([][]Direction, pictureWidth)
-
+	// Create flat list and matrix
+	chromosome := make([]Direction, len(directions))
+	matrix := make([][]Direction, pictureWidth)
 	i := 0
 	for x := 0; x < pictureWidth; x++ {
-		directionMatrix[x] = make([]Direction, pictureHeight)
+		matrix[x] = make([]Direction, pictureHeight)
 		for y := 0; y < pictureHeight; y++ {
-			//fmt.Println(i)
-			directionMatrix[x][y] = directionsFlat[i]
+			chromosome[i] = directions[Vertex{x, y}]
+			matrix[x][y] = directions[Vertex{x, y}]
 			i++
 		}
 	}
 
-	segmendIdMap := make(map[int][]Vertex)
-	for x, segment := range segments {
-		segmendIdMap[x] = segment
-		for _, elem := range segment {
-			segmentMatrix[elem.X][elem.Y] = x
-		}
-	}
-
-
-	return directionMatrix, segmentMatrix, segmendIdMap
+	return chromosome, matrix
 }
 
 func edgeDirection(edge Edge) Direction {

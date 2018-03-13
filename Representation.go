@@ -19,10 +19,9 @@ type MatrixIndividual struct {
 }
 
 func (i *MatrixIndividual) Init(graph Graph) {
-	randomKValue := rand.Intn((6000 - 500) + 500)
-	i.DirectionMatrix, i.SegmentMatrix, i.SegmentMap = graph.GraphSegmentation(randomKValue)
-	//i.DirectionMatrix = dirMatrix
-	//i.SegmentMatrix, i.SegmentMap = DirectionMatrixToSegmentMatrixAndSegmentMap(dirMatrix)
+	randomKValue := rand.Intn((6000 - 5000) + 5000)
+	_, i.DirectionMatrix = graph.GraphSegmentation(randomKValue)
+	i.SegmentMatrix, i.SegmentMap = DirectionMatrixToSegmentMatrixAndSegmentMap(i.DirectionMatrix)
 	i.CalculateFitness()
 }
 
@@ -36,6 +35,7 @@ func (i *MatrixIndividual) IsDominating(i2 *MatrixIndividual) bool {
 func (i *MatrixIndividual) mutate() {
 
 	// Choose a random segment to merge
+
 	seg1ID := randomSegmentId(i.SegmentMap)
 	seg2ID := seg1ID
 
@@ -74,6 +74,7 @@ func (i *MatrixIndividual) mutate() {
 	delete(i.SegmentMap, seg2ID)
 }
 
+
 func (i *MatrixIndividual) CalculateFitness() {
 	i.edgeValue = i.EdgeValue()
 	i.overallDeviation = i.OverallDeviation()
@@ -90,7 +91,7 @@ func (i *MatrixIndividual) OverallDeviation() float64 {
 			deviation += euclideanDistance(&p1, &p2)
 		}
 	}
-	return deviation
+	return deviation / float64(len(i.SegmentMap))
 }
 
 func (i *MatrixIndividual) EdgeValue() float64 {

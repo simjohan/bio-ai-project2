@@ -37,20 +37,21 @@ func (population *Population) nsga2() {
 		sort.Sort(ByNSGA(population.Individuals))
 
 
-		log.Println("Generation:", g, "Number of fronts:", len(population.Fronts), "Size of front 1:", len(population.Fronts[0]))
+		log.Println("Generation:", g, "edgeValue", population.Individuals[0].edgeValue, "deviation", population.Individuals[0].overallDeviation, "Number of fronts:", len(population.Fronts), "Size of front 1:", len(population.Fronts[0]))
 	}
 
 	for i := range population.Fronts[0] {
+
 		WriteImage("images/output/paretofront/"+strconv.Itoa(len(population.Fronts[0][i].SegmentMap))+"_"+strconv.Itoa(i)+".png",
 			SegmentMatrixToImage(population.Fronts[0][i].SegmentMatrix, true))
+		WriteImage("images/output/paretofront_colored/"+strconv.Itoa(len(population.Fronts[0][i].SegmentMap))+"_"+strconv.Itoa(i)+".png",
+			SegmentMatrixToImage(population.Fronts[0][i].SegmentMatrix, false))
 	}
-	WriteImage("images/output/green/"+strconv.Itoa(len(population.Individuals[0].SegmentMap))+".png",
-		SegmentMatrixToImage(population.Individuals[0].SegmentMatrix, false))
 
 }
 
 func (population *Population) WeightedSum() {
-	WriteImage("images/output/beforeinsed.png", SegmentMatrixToImage(population.Individuals[0].SegmentMatrix, false))
+	WriteImage("images/output/before.png", SegmentMatrixToImage(population.Individuals[0].SegmentMatrix, false))
 	for g := 0; g <= generations; g++ {
 
 		sort.Sort(byFitness(population.Individuals))
@@ -77,9 +78,10 @@ func (population *Population) WeightedSum() {
 		sort.Sort(byFitness(population.Individuals))
 
 		log.Println("Generation", g, "edge:", population.Individuals[1].edgeValue, "Best:", population.Individuals[0].Fitness, "Worst:", population.Individuals[len(population.Individuals)-1].Fitness)
-		break
 	}
 	WriteImage("images/output/weighted_sum/"+strconv.Itoa(len(population.Individuals[0].SegmentMap))+".png",
+		SegmentMatrixToImage(population.Individuals[0].SegmentMatrix, true))
+	WriteImage("images/output/weighted_sum_colored/"+strconv.Itoa(len(population.Individuals[0].SegmentMap))+".png",
 		SegmentMatrixToImage(population.Individuals[0].SegmentMatrix, false))
 }
 
